@@ -15,7 +15,7 @@ H5P.Question = (function ($, EventDispatcher, JoubelUI) {
     EventDispatcher.call(self);
 
     // Register default section order
-    self.order = ['video', 'image', 'introduction', 'content', 'explanation', 'feedback', 'scorebar', 'buttons', 'read'];
+    self.order = ['video', 'image', 'audio', 'introduction', 'content', 'explanation', 'feedback', 'scorebar', 'buttons', 'read'];
 
     // Keep track of registered sections
     var sections = {};
@@ -788,20 +788,58 @@ H5P.Question = (function ($, EventDispatcher, JoubelUI) {
     };
 
     /**
+     * An audio to display above the task.
+     *
+     * @param {object} params
+     */
+    self.setAudio = function (params) {
+      sections.audio = {
+        $element: $('<div/>', {
+          'class': 'h5p-question-audio'
+        })
+      };
+
+      if (disableAutoPlay && params.autoplay) {
+        params.autoplay = false;
+      }
+
+      sections.audio.instance = H5P.newRunnable(params, self.contentId, sections.audio.$element);
+      var fromAudio = false; // Hack to avoid never ending loop
+      sections.audio.instance.on('resize', function () {
+        fromAudio = true;
+        self.trigger('resize');
+        fromAudio = false;
+      });
+      self.on('resize', function () {
+        if (!fromAudio) {
+          sections.audio.instance.trigger('resize');
+        }
+      });
+
+      return self;
+    };
+
+    /**
      * Will stop any playback going on in the task.
      */
     self.pause = function () {
       if (sections.video && sections.video.isVisible) {
         sections.video.instance.pause();
       }
+      if (sections.audio && sections.audio.isVisible) {
+        sections.audio.instance.pause();
+      }
     };
 
     /**
-     * Start playback of video
+     * Start playback of video ans audio
      */
     self.play = function () {
       if (sections.video && sections.video.isVisible) {
         sections.video.instance.play();
+      }
+      if (sections.audio && sections.audio.isVisible) {
+        sections.audio.instance.play();
       }
     };
 
